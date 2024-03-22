@@ -2,13 +2,13 @@
 // Your code here
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 
 /// @title MyNFT - A contract for creating and managing NFTs
 contract MyNFT is ERC721, Ownable {
-    struct TokenMetadata {
+    struct tokenMetadata {
         string link;
     }
     
@@ -25,7 +25,7 @@ contract MyNFT is ERC721, Ownable {
     function mint(address dapp, uint256 tokenId, string memory link) external onlyOwner {
         require(!_exists(tokenId), "Token already minted");
         _mint(dapp, tokenId);
-        _tokenMetadata[tokenId] = TokenMetadata(link);
+        _tokenMetadata[tokenId] = tokenMetadata(link);
     }
     
     /// @dev Transfers the NFT to the specified address, largest donor or content creator, but only once
@@ -47,7 +47,8 @@ contract MyNFT is ERC721, Ownable {
     function tokenLink(uint256 tokenId) external view returns (string memory) {
         return _tokenMetadata[tokenId].link;
     }
-    /**
+    
+    /** SOLIDITY VERSION
      * @dev Function that is called before any token transfer.
      * It checks if the token has already been transferred once - if no, transfer is allowed.
      * If the transfer is not allowed, it reverts the transaction with an error message.
@@ -55,7 +56,7 @@ contract MyNFT is ERC721, Ownable {
      * @param from The address sending the tokens.
      * @param to The address receiving the tokens.
      * @param tokenId The ID of the token being transferred.
-     */
+
     function _beforeTokenTransfer(
         address from, 
         address to, 
@@ -63,4 +64,37 @@ contract MyNFT is ERC721, Ownable {
     ) internal override virtual {
         require(from == address(0) || to == address(0) || !_transferred[tokenId], "Token transfer is blocked");
         super._beforeTokenTransfer(from, to, tokenId);
+    }      
+    */
+
+
+    /**
+     * @dev Function that is called before any token approval. - YUL version
+     * It checks if the token has already been transferred once - if no, approval is allowed.
+     * If the approval is not allowed, it reverts the transaction with an error message.
+     * This function overrides the parent implementation from the ERC721 contract.
+     * @param owner The address giving approval.
+     * @param approved The address receiving approval.
+     * @param tokenId The ID of the token being approved.
+     */
+     function _beforeTokenTransfer(
+        address from, 
+        address to, 
+        uint256 tokenId
+     ) internal override virtual {
+        // because require takes up more gas than if statement
+        assembly {
+            let transferred := sload(_transferred.slot)
+            switch transferred
+            case 0 {
+                sstore(_transferred.slot, 1)
+            }
+            default {
+                // revert/return if token has already been transferred
+            revert(0,0)
+            }
+        }
+
+        super._beforeTokenTransfer(from, to, tokenId);
     }
+}
