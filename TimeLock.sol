@@ -1,4 +1,5 @@
 // SPDX-Licence Identifier: MIT
+
 pragma solidity ^0.8.20;
 
 interface INFT {
@@ -8,13 +9,17 @@ interface INFT {
 
 interface IDonationContract {
     function currentLeader(uint256 eventId) external view returns (address); 
+    function toggleDonationStatus(bool _isActive) external;
+    function withdraw() external;
 }
 
+/// @title TimeLock - A contract for locking NFT tokens until they are transfered to highest donors
 contract TimeLock {
 
-    event NFTTransferred(address indexed beneficiary, address nftContract, uint256 tokenId);
+    event nftTransferred(address indexed beneficiary, address nftContract, uint256 tokenId);
 
-    struct NFTEvent {
+    /// @dev Structure of an NFT event
+    struct nftEvent {
         address nftContract;
         uint256 tokenId;
         uint256 releaseTime;
@@ -23,7 +28,7 @@ contract TimeLock {
     }
 
     address public owner;
-    mapping(uint256 => NFTEvent) public nftEvents;
+    mapping(uint256 => nftEvent) public nftEvents;
     uint256 public nextEventId;
 
     modifier onlyOwner() {
@@ -35,10 +40,15 @@ contract TimeLock {
         owner = msg.sender;
     }
 
-    function createNFTEvent(uint256 _releaseTime, address _nftContract, uint256 _tokenId, address _donationContract) public onlyOwner {
+    /// @dev Creates a nftevent storing all the info about it (release time, nft and donation contracts, id of the token)
+    /// @param _releaseTime : time at which the NFT will be given to highest donor, set by the creator
+    /// @param _nftContract : the address of the nftcontract that created the token (should also be the same)
+    /// @param _tokenId : id of the token
+    /// @param _donationContract : the address of the donation contract to which donations are made (should always be the same)
+    function createNftEvent(uint256 _releaseTime, address _nftContract, uint256 _tokenId, address _donationContract) public onlyOwner {
         require(_releaseTime > block.timestamp, "Release time is before current time.");
 
-        nftEvents[nextEventId] = NFTEvent({
+        nftEvents[nextEventId] = nftEvent({
             nftContract: _nftContract,
             tokenId: _tokenId,
             releaseTime: _releaseTime,
@@ -49,14 +59,17 @@ contract TimeLock {
         nextEventId++;
     }
 
+    /// @dev Transfers the NFT to the winner, checks that the release time has been reached
+    /// @param _eventId : ID of the NFT event (many NFTs can be managed at the same time)
     function transferNFTToWinner(uint256 _eventId) public onlyOwner {
-        NFTEvent storage nftEvent = nftEvents[_eventId];
-        require(block.timestamp >= nftEvent.releaseTime, "Donation period is not over.");
-        require(nftEvent.isActive, "Event is not active.");
+        nftEvent storage nftCurrentEvent = nftEvents[_eventId];
+        require(block.timestamp >= nftCurrentEvent.releaseTime, "Donation period is not over.");
+        require(nftCurrentEvent.isActive, "Event is not active.");
         
-        address donationContractAddress = nftEvent.donationContract;
+        address donationContractAddress = nftCurrentEvent.donationContract;
         address winner;
 
+        /// @notice Assembly (YUL) code to optimize gas cost (to find the highest donor, using the donation contract)
         bytes4 sig = bytes4(keccak256("currentLeader(uint256)"));
         assembly {
             let ptr := mload(0x40)
@@ -82,11 +95,15 @@ contract TimeLock {
 
         require(winner != address(0), "Winner cannot be the zero address.");
         
-        INFT(nftEvent.nftContract).transferOnce(winner, nftEvent.tokenId);
-        nftEvent.isActive = false;
+        INFT(nftCurrentEvent.nftContract).transferOnce(winner, nftCurrentEvent.tokenId);
+        IDonationContract(donationContractAddress).toggleDonationStatus(false);
+        nftCurrentEvent.isActive = false;
 
-        emit NFTTransferred(winner, nftEvent.nftContract, nftEvent.tokenId);
+        /// @dev Withdraw the 3% share of donations to the TimeLock contract 
+
+        IDonationContract(donationContractAddress).withdraw();
+
+        emit nftTransferred(winner, nftCurrentEvent.nftContract, nftCurrentEvent.tokenId);
     }
 
 }
-
