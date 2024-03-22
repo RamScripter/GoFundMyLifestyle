@@ -54,7 +54,32 @@ contract TimeLock {
         require(block.timestamp >= nftEvent.releaseTime, "Donation period is not over.");
         require(nftEvent.isActive, "Event is not active.");
         
-        address winner = IDonationContract(nftEvent.donationContract).currentLeader(_eventId);
+        address donationContractAddress = nftEvent.donationContract;
+        address winner;
+
+        bytes4 sig = bytes4(keccak256("currentLeader(uint256)"));
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr,sig) 
+            mstore(add(ptr,0x04), _eventId) 
+
+            let result := call(
+                15000, 
+                donationContractAddress, 
+                0, 
+                ptr, 
+                0x24, 
+                ptr, 
+                0x20 
+            )
+
+            if iszero(result) {
+                revert(0, 0)
+            }
+
+            winner := mload(ptr) 
+        }
+
         require(winner != address(0), "Winner cannot be the zero address.");
         
         INFT(nftEvent.nftContract).transferOnce(winner, nftEvent.tokenId);
