@@ -1,10 +1,10 @@
 // SPDX-Licence Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface IERC721 {
-    function safeTransferFrom(address from, address to, uint256 tokenId) external;
-    function mintTo(address recipient, uint256 tokenId) external; 
+interface INFT {
+    function transferOnce(address to, uint256 tokenId) external;
 }
+
 
 interface IDonationContract {
     function currentLeader(uint256 eventId) external view returns (address); 
@@ -51,16 +51,16 @@ contract TimeLock {
 
     function transferNFTToWinner(uint256 _eventId) public onlyOwner {
         NFTEvent storage nftEvent = nftEvents[_eventId];
-        require(block.timestamp >= nftEvent.releaseTime, "Lock period is not over.");
+        require(block.timestamp >= nftEvent.releaseTime, "Donation period is not over.");
         require(nftEvent.isActive, "Event is not active.");
         
         address winner = IDonationContract(nftEvent.donationContract).currentLeader(_eventId);
         require(winner != address(0), "Winner cannot be the zero address.");
         
-        IERC721(nftEvent.nftContract).safeTransferFrom(address(this), winner, nftEvent.tokenId);
+        INFT(nftEvent.nftContract).transferOnce(winner, nftEvent.tokenId);
         nftEvent.isActive = false;
 
-        emit NFTTransferred(_eventId, winner, nftEvent.nftContract, nftEvent.tokenId);
+        emit NFTTransferred(winner, nftEvent.nftContract, nftEvent.tokenId);
     }
 
 }
