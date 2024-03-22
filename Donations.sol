@@ -36,10 +36,10 @@ contract Donations is Ownable {
      * @param creator The address of the creator of the NFT associated with the token ID
      * @param isActive Boolean indicating whether donations are active for this token
      */
-     function setToken(uint256 tokenId, address creator, bool isActive) external onlyOwner {
+     function setToken(uint256 tokenId, address creator) external onlyOwner {
         require(tokenInfos[tokenId].creator == address(0), "Token ID already exists");
         tokenInfos[tokenId].creator = creator;
-        tokenInfos[tokenId].isActive = isActive;
+        tokenInfos[tokenId].isActive = true;
     }
 
     /**

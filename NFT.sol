@@ -19,13 +19,14 @@ contract MyNFT is ERC721, Ownable {
     }
     
     /// @dev Mints a new NFT and assigns it to the parent timelock contract
-    /// @param dapp The address to assign the NFT to
+    /// @param owner The address to assign the NFT to - timelock contract
     /// @param tokenId The ID of the NFT - we can maybe change this to a string combo of creator name and content name
     /// @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
-    function mint(address dapp, uint256 tokenId, string memory link) external onlyOwner {
+    function mint(address owner, address creator, uint256 tokenId, string memory link) external onlyOwner {
         require(!_exists(tokenId), "Token already minted");
         _mint(dapp, tokenId);
         _tokenMetadata[tokenId] = tokenMetadata(link);
+        Donations(donationsContractAddress).setToken(tokenId, creator);
     }
     
     /// @dev Transfers the NFT to the specified address, largest donor or content creator, but only once
