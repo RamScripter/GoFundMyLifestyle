@@ -7,7 +7,7 @@ import "contracts/donation.sol";
 
 interface INFT {
     function transferOnce(address to, uint256 tokenId) external;
-    function mint(address owner, uint256 tokenId, string memory link, address creator) external;
+    function mint(address owner, address creator, uint256 tokenId, string memory link) external;
     function owner() external view returns (address);
 }
 
@@ -60,18 +60,15 @@ contract TimeLock {
         return donationOwner == address(this);
     }
 
-    // function to create an NFT, interacting with mint function
     function CreateNft(uint256 tokenId, string memory link) public {
-        INFT(myNFTAddress).mint(address(this), tokenId, link, msg.sender);
+        INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link);
     }
 
-    // Deploy NFt contract
     function deployMyNFT(string memory name, string memory symbol) public onlyOwner {
         MyNFT myNFT = new MyNFT(name, symbol);
         myNFTAddress = address(myNFT);
     }
 
-    // Deploy donation contract
     function deployDonation() public onlyOwner {
         donation don = new donation(address(this)); 
         donationAddress = address(don);
