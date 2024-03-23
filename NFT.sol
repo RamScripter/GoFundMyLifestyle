@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-// Your code here
 pragma solidity ^0.8.20;
 
-import "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IDonation {
     function setToken(uint256 tokenId, address creator) external;
