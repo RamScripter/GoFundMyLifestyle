@@ -2,10 +2,8 @@
 pragma solidity ^0.8.23;
 
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol"; 
-//import "../node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol"; 
-//import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol"; 
 
-contract Donation is Ownable {
+contract donation is Ownable {
 
     struct TokenInfo {
             address largestDonor;
@@ -15,7 +13,7 @@ contract Donation is Ownable {
             bool isActive;
     }
 
-    mapping(uint256 => TokenInfo) private tokenInfos;
+    mapping(uint256 => TokenInfo) private allTokenInfos;
 
     // might add in our addresses as multiple owners for the MVP demo
 
@@ -39,25 +37,25 @@ contract Donation is Ownable {
      * @param creator The address of the creator of the NFT associated with the token ID
      */
      function setToken(uint256 tokenId, address creator) external onlyOwner {
-        require(tokenInfos[tokenId].creator == address(0), "Token ID already exists");
-        tokenInfos[tokenId].creator = creator;
-        tokenInfos[tokenId].isActive = true;
+        require(allTokenInfos[tokenId].creator == address(0), "Token ID already exists");
+        allTokenInfos[tokenId].creator = creator;
+        allTokenInfos[tokenId].isActive = true;
     }
 
-/**
+    /**
      * @dev donate function
      * @notice Allows users to donate funds to the contract/NFT creator for a specific token ID
      * @param tokenId The ID of the token for which the donation is made
      */
     function donate(uint256 tokenId) external payable {
-        TokenInfo storage tokenInfo = tokenInfos[tokenId];
+        TokenInfo storage tokenInfo = allTokenInfos[tokenId];
         require(tokenInfo.isActive, "Donations are currently not active for this token");
         require(msg.value > 0, "Donation amount must be greater than 0");
 
         // Update total donations for the token - in YUL 
         // instead of tokenInfo.totalDonations += msg.value;
         assembly {
-            let tokenInfoAssembly := sload(tokenInfos.slot)
+            let tokenInfoAssembly := sload(allTokenInfos.slot)
             let totalDonations := add(sload(add(tokenInfoAssembly, 0x40)), calldataload(0x0))
             sstore(add(tokenInfoAssembly, 0x40), totalDonations)
         }
@@ -75,7 +73,7 @@ contract Donation is Ownable {
      * @param tokenId The ID of the token for which the withdrawal is made
      */
     function withdraw(uint256 tokenId) external onlyOwner {
-        TokenInfo storage tokenInfo = tokenInfos[tokenId];
+        TokenInfo storage tokenInfo = allTokenInfos[tokenId];
         require(tokenInfo.isActive, "Donations are currently not active for this token");
 
         uint256 balance = tokenInfo.totalDonations;
@@ -95,7 +93,7 @@ contract Donation is Ownable {
      * @param isActive Bool flag indicating whether donations should be active or not
      */
     function toggleDonationStatus(uint256 tokenId, bool isActive) external onlyOwner {
-        tokenInfos[tokenId].isActive = isActive;
+        allTokenInfos[tokenId].isActive = isActive;
         emit donationStatusChanged(tokenId, isActive);
     }
       
