@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "NFT.sol";
-import "Donations.sol";
+import "contracts/donation.sol";
+import "contracts/nft.sol";
 
 interface INFT {
     function transferOnce(address to, uint256 tokenId) external;
@@ -15,6 +15,7 @@ interface IDonationContract {
     function toggleDonationStatus(bool _isActive) external;
     function withdraw() external;
     function owner() external view returns (address);
+    function addOwner(address newOwner) external;
 }
 
 /// @title TimeLock - A contract for locking NFT tokens until they are transfered to highest donors
@@ -69,7 +70,7 @@ contract TimeLock {
     }
 
     function deployDonation() public onlyOwner {
-        donation don = new donation(address(this)); 
+        Donation don = new Donation(address(this)); 
         donationAddress = address(don);
     }
 
