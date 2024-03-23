@@ -2,89 +2,102 @@
 pragma solidity ^0.8.23;
 
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol"; 
-import "../node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol"; 
-import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol"; 
+//import "../node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol"; 
+//import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol"; 
 
-import "../hedera-services/hedera-node/test-clients/src/main/resource/contract/solidity/hip-206/HederaResponseCodes.sol";
-import "../hedera-services/hedera-node/test-clients/src/main/resource/contract/solidity/hip-206/IHederaTokenService.sol";
-import  "../hedera-services/hedera-node/test-clients/src/main/resource/contract/solidity/hip-206/HederaResponseCodes.sol";
+contract Donation is Ownable {
 
-contract Donation is ERC721, Ownable {
-
-
-    constructor() Ownable(msg.sender) 
-    ERC721("GoFundMyLifestyle", "GFML") {}
-  
-    bool auctionActive = true;
-
-    uint256 donationCounter;
-    mapping(address => uint256) allBids;
-    address largestDonor;
-    uint256 largestOffer;
-    uint256[] allOffers;
-
-    function mint(address to, uint256 tokenId)  public // uint256 amount
-    {
-        _mint(to, tokenId);
-        //_safeMint(msg.sender);
-        
+    struct TokenInfo {
+            address largestDonor;
+            uint256 largestDonation;
+            uint256 totalDonations;
+            address creator;
+            bool isActive;
     }
 
-    function makeAnOffer(address to, uint256 amount) public payable returns(address) {
-        require(auctionActive, "The auction isn't active anymore");
-        require(msg.value > 0.01 ether, "Need to send 0.01 ether for the fees");
+    mapping(uint256 => TokenInfo) private tokenInfos;
 
-        donationCounter++;
+    // might add in our addresses as multiple owners for the MVP demo
 
-        bool highest = true;
-        for (uint i=0; i < allOffers.length; i++) {
-            if (allOffers[i] < amount) {
-                 highest = false;
-            }
-        }
-        
-        if (highest == true) {
-            largestDonor = to;
-            largestOffer = amount;
+    // Events
+    event donationReceived(uint256 tokenId, address donor);
+    event withdrawal(uint256 tokenId, uint256 ownerShare, uint256 creatorShare);
+    event donationStatusChanged(uint256 tokenId, bool isActive);
 
-        }
 
-        
-        allOffers.push(amount);
-        return to;
-
+    /**
+     * @dev Constructor function
+     * @param timeLockAddress The address of the time lock contract that will become the owner of this contract
+     */
+    constructor(address timeLockAddress) Ownable(msg.sender) {
+        transferOwnership(timeLockAddress);
     }
 
-    function MakeDonation() public payable returns(bool) {
+    /**
+     * @dev Function to set a new token ID
+     * @param tokenId The ID of the token to set
+     * @param creator The address of the creator of the NFT associated with the token ID
+     */
+     function setToken(uint256 tokenId, address creator) external onlyOwner {
+        require(tokenInfos[tokenId].creator == address(0), "Token ID already exists");
+        tokenInfos[tokenId].creator = creator;
+        tokenInfos[tokenId].isActive = true;
+    }
 
-        require(auctionActive, "The auction isn't active anymore");
-        require(msg.value > 0.01 ether, "Need to send 0.01 ether for the fees");
+/**
+     * @dev donate function
+     * @notice Allows users to donate funds to the contract/NFT creator for a specific token ID
+     * @param tokenId The ID of the token for which the donation is made
+     */
+    function donate(uint256 tokenId) external payable {
+        TokenInfo storage tokenInfo = tokenInfos[tokenId];
+        require(tokenInfo.isActive, "Donations are currently not active for this token");
+        require(msg.value > 0, "Donation amount must be greater than 0");
+
+        // Update total donations for the token - in YUL 
+        // instead of tokenInfo.totalDonations += msg.value;
+        assembly {
+            let tokenInfoAssembly := sload(tokenInfos.slot)
+            let totalDonations := add(sload(add(tokenInfoAssembly, 0x40)), calldataload(0x0))
+            sstore(add(tokenInfoAssembly, 0x40), totalDonations)
+        }
+
+        if (msg.value > tokenInfo.largestDonation) {
+            tokenInfo.largestDonor = msg.sender;
+            tokenInfo.largestDonation = msg.value;
+        }
+        emit donationReceived(tokenId, msg.sender);
+    }
+
+    /**
+     * @dev withdraw function
+     * @notice Timelock will be able to withdraw funds from the contract to the timelock and creator for each token ID
+     * @param tokenId The ID of the token for which the withdrawal is made
+     */
+    function withdraw(uint256 tokenId) external onlyOwner {
+        TokenInfo storage tokenInfo = tokenInfos[tokenId];
+        require(tokenInfo.isActive, "Donations are currently not active for this token");
+
+        uint256 balance = tokenInfo.totalDonations;
+        uint256 ownerShare = (balance * 3) / 100;
+        uint256 creatorShare = balance - ownerShare;
     
+        payable(owner()).transfer(ownerShare);
+        payable(tokenInfo.creator).transfer(creatorShare);
 
-        uint256 newOffer = msg.value;
-        uint256 temporaryBestOffer = allBids[largestDonor];
-
-        allBids[msg.sender] = newOffer;
-        donationCounter++; 
-
-        if (newOffer > temporaryBestOffer) {
-            largestOffer = newOffer;
-            largestDonor = msg.sender;
-
-        }
-        return true;
+        emit withdrawal(tokenId, ownerShare, creatorShare);
     }
 
-    function transferNft( address token, address receiver, int64 serial) external returns(int){
-
-        IHederaTokenService ihts = new IHederaTokenService();
-        int response = ihts.transferNFT(token, address(this), receiver, serial);
-
-        if(response != HederaResponseCodes.SUCCESS){
-            revert("Failed to transfer non-fungible token");
-        }
-
-        return response;
+    /**
+     * @dev Change donation status for a specific token ID - designed to close donations after time period
+     * @notice Only the owner (ie timelock) can call
+     * @param tokenId The ID of the token for which the donations open/close
+     * @param isActive Bool flag indicating whether donations should be active or not
+     */
+    function toggleDonationStatus(uint256 tokenId, bool isActive) external onlyOwner {
+        tokenInfos[tokenId].isActive = isActive;
+        emit donationStatusChanged(tokenId, isActive);
     }
+      
 
 }
