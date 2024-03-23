@@ -1,16 +1,21 @@
-// SPDX-Licence Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.20;
 
+import "contracts/nft.sol";
+import "contracts/donation.sol";
+
 interface INFT {
     function transferOnce(address to, uint256 tokenId) external;
+    function mint(address owner, uint256 tokenId, string memory link, address creator) external;
+    function owner() external view returns (address);
 }
-
 
 interface IDonationContract {
     function currentLeader(uint256 eventId) external view returns (address); 
     function toggleDonationStatus(bool _isActive) external;
     function withdraw() external;
+    function owner() external view returns (address);
 }
 
 /// @title TimeLock - A contract for locking NFT tokens until they are transfered to highest donors
@@ -31,6 +36,9 @@ contract TimeLock {
     mapping(uint256 => nftEvent) public nftEvents;
     uint256 public nextEventId;
 
+    address public myNFTAddress;
+    address public donationAddress;
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Caller is not the owner.");
         _;
@@ -38,6 +46,35 @@ contract TimeLock {
 
     constructor() {
         owner = msg.sender;
+    }
+
+    // Function to check if TimeLock is the owner of MyNFT
+    function isOwnerOfMyNFT() public view returns (bool) {
+        address myNFTOwner = INFT(myNFTAddress).owner();
+        return myNFTOwner == address(this);
+    }
+
+    // Function to check if TimeLock is the owner of Donation
+    function isOwnerOfDonation() public view returns (bool) {
+        address donationOwner = IDonationContract(donationAddress).owner();
+        return donationOwner == address(this);
+    }
+
+    // function to create an NFT, interacting with mint function
+    function CreateNft(uint256 tokenId, string memory link) public {
+        INFT(myNFTAddress).mint(address(this), tokenId, link, msg.sender);
+    }
+
+    // Deploy NFt contract
+    function deployMyNFT(string memory name, string memory symbol) public onlyOwner {
+        MyNFT myNFT = new MyNFT(name, symbol);
+        myNFTAddress = address(myNFT);
+    }
+
+    // Deploy donation contract
+    function deployDonation() public onlyOwner {
+        donation don = new donation(address(this)); 
+        donationAddress = address(don);
     }
 
     /// @dev Creates a nftevent storing all the info about it (release time, nft and donation contracts, id of the token)
