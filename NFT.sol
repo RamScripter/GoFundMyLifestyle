@@ -27,7 +27,6 @@ contract MyNFT is ERC721, Ownable {
     /// @param tokenId The ID of the NFT - we can maybe change this to a string combo of creator name and content name
     /// @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
     function mint(address owner, address creator, uint256 tokenId, string memory link) external onlyOwner {
-        require(!_exists(tokenId), "Token already minted");
         _mint(owner, tokenId);
         _tokenMetadata[tokenId] = tokenMetadata(link);
         IDonation(DonationsContractAddress).setToken(tokenId, creator);
