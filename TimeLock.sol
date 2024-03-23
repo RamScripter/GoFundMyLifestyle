@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.20;
 
-import "contracts/nft.sol";
-import "contracts/donation.sol";
+import "NFT.sol";
+import "Donations.sol";
 
 interface INFT {
     function transferOnce(address to, uint256 tokenId) external;

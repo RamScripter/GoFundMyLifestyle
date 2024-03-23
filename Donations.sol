@@ -104,6 +104,4 @@ contract donation is Ownable {
         TokenInfo storage myToken = allTokenInfos[tokenId];
         return myToken.largestDonor;
     }
-      
-
 }
