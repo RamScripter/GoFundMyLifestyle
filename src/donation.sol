@@ -14,14 +14,13 @@ contract donation is Ownable {
     }
 
     mapping(uint256 => TokenInfo) private allTokenInfos;
-
     // might add in our addresses as multiple owners for the MVP demo
 
     // Events
     event donationReceived(uint256 tokenId, address donor);
     event withdrawal(uint256 tokenId, uint256 ownerShare, uint256 creatorShare);
     event donationStatusChanged(uint256 tokenId, bool isActive);
-
+ 
 
     /**
      * @dev Constructor function
@@ -95,6 +94,15 @@ contract donation is Ownable {
     function toggleDonationStatus(uint256 tokenId, bool isActive) external onlyOwner {
         allTokenInfos[tokenId].isActive = isActive;
         emit donationStatusChanged(tokenId, isActive);
+    }
+
+    /**
+     * @dev enables to get the address of the highest donation
+     * @param tokenId address of the largest donor
+     */
+    function getDonorAddress(uint256 tokenId) public view returns(address) {
+        TokenInfo storage myToken = allTokenInfos[tokenId];
+        return myToken.largestDonor;
     }
       
 
