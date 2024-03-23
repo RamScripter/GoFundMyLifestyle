@@ -34,7 +34,7 @@ contract Donation is Ownable {
     }
 
     // @dev Modifier to restrict access to the owner or authorized addresses
-    modifier onlyOwner() {
+    modifier onlyAuthorized() {
         require(msg.sender == owner() || owners[msg.sender], "Not owner or authorized");
         _;
     }
@@ -43,7 +43,7 @@ contract Donation is Ownable {
      * @dev Function to add another owner
      * @param newOwner The address of the new owner to be added
      */
-    function addOwner(address newOwner) external onlyOwner {
+    function addOwner(address newOwner) external onlyAuthorized {
         require(newOwner != address(0), "Invalid owner address");
         owners[newOwner] = true;
     }
@@ -53,7 +53,7 @@ contract Donation is Ownable {
      * @param tokenId The ID of the token to set
      * @param creator The address of the creator of the NFT associated with the token ID
      */
-    function setToken(uint256 tokenId, address creator) external onlyOwner {
+    function setToken(uint256 tokenId, address creator) external onlyAuthorized {
         require(allTokenInfos[tokenId].creator == address(0), "Token ID already exists");
         allTokenInfos[tokenId].creator = creator;
         allTokenInfos[tokenId].isActive = true;
@@ -90,7 +90,7 @@ contract Donation is Ownable {
      * @notice Timelock will be able to withdraw funds from the contract to the timelock and creator for each token ID
      * @param tokenId The ID of the token for which the withdrawal is made
      */
-    function withdraw(uint256 tokenId) external onlyOwner {
+    function withdraw(uint256 tokenId) external onlyAuthorized {
         TokenInfo storage tokenInfo = allTokenInfos[tokenId];
         require(tokenInfo.isActive, "Donations are currently not active for this token");
 
@@ -110,7 +110,7 @@ contract Donation is Ownable {
      * @param tokenId The ID of the token for which the donations open/close
      * @param isActive Bool flag indicating whether donations should be active or not
      */
-    function toggleDonationStatus(uint256 tokenId, bool isActive) external onlyOwner {
+    function toggleDonationStatus(uint256 tokenId, bool isActive) external onlyAuthorized {
         allTokenInfos[tokenId].isActive = isActive;
         emit DonationStatusChanged(tokenId, isActive);
     }
