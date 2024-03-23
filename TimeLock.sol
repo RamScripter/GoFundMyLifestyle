@@ -48,6 +48,13 @@ contract TimeLock {
         owner = msg.sender;
     }
 
+    /**
+     * @dev Returns the contract's balance
+     */
+    function getContractBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
     // Function to check if TimeLock is the owner of MyNFT
     function isOwnerOfMyNFT() public view returns (bool) {
         address myNFTOwner = INFT(myNFTAddress).owner();
