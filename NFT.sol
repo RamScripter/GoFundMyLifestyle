@@ -5,6 +5,9 @@ pragma solidity ^0.8.20;
 import "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
+interface IDonation {
+    function setToken(uint256 tokenId, address creator) external;
+}
 
 /// @title MyNFT - A contract for creating and managing NFTs
 contract MyNFT is ERC721, Ownable {
@@ -16,7 +19,7 @@ contract MyNFT is ERC721, Ownable {
     mapping(uint256 => bool) private _transferred;
     address public DonationsContractAddress;
     
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) Ownable (msg.sender) {
     }
     
     /// @dev Mints a new NFT and assigns it to the parent timelock contract
@@ -25,9 +28,9 @@ contract MyNFT is ERC721, Ownable {
     /// @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
     function mint(address owner, address creator, uint256 tokenId, string memory link) external onlyOwner {
         require(!_exists(tokenId), "Token already minted");
-        _mint(dapp, tokenId);
+        _mint(owner, tokenId);
         _tokenMetadata[tokenId] = tokenMetadata(link);
-        Donations(donationsContractAddress).setToken(tokenId, creator);
+        IDonation(DonationsContractAddress).setToken(tokenId, creator);
     }
     
     /// @dev Transfers the NFT to the specified address, largest donor or content creator, but only once
