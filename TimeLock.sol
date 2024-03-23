@@ -2,17 +2,17 @@
 
 pragma solidity ^0.8.20;
 
-import "NFT.sol";
-import "Donations.sol";
+import "contracts/nft.sol";
+import "contracts/donation.sol";
 
 interface INFT {
     function transferOnce(address to, uint256 tokenId) external;
-    function mint(address owner, address creator, uint256 tokenId, string memory link) external;
+    function mint(address owner, address creator, uint256 tokenId, string memory link, address DonationsContractAddress) external;
     function owner() external view returns (address);
 }
 
 interface IDonationContract {
-    function currentLeader(uint256 eventId) external view returns (address); 
+    function getDonorAddress(uint256 tokenId) external view returns (address); 
     function toggleDonationStatus(bool _isActive) external;
     function withdraw() external;
     function owner() external view returns (address);
@@ -61,7 +61,7 @@ contract TimeLock {
     }
 
     function CreateNft(uint256 tokenId, string memory link) public {
-        INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link);
+        INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link, donationAddress);
     }
 
     function deployMyNFT(string memory name, string memory symbol) public onlyOwner {
@@ -104,7 +104,7 @@ contract TimeLock {
         address winner;
 
         /// @notice Assembly (YUL) code to optimize gas cost (to find the highest donor, using the donation contract)
-        bytes4 sig = bytes4(keccak256("currentLeader(uint256)"));
+        bytes4 sig = bytes4(keccak256("getDonorAddress(uint256)"));
         assembly {
             let ptr := mload(0x40)
             mstore(ptr,sig) 
@@ -141,3 +141,4 @@ contract TimeLock {
     }
 
 }
+
