@@ -37,7 +37,7 @@ contract MyNFT is ERC721, Ownable {
     function transferOnce(address to, uint256 tokenId) external {
         // add onlyOwner modifier to prevent anyone from transferring the token if we need for more fns
         require(ownerOf(tokenId) == msg.sender, "Only token owner can transfer");
-        // this might be redundant given the _beforetoken transfer function - but keeping for now
+        // makes the beforetransfer function check redundant
         require(!_transferred[tokenId], "Token already transferred once");
         
         _transfer(msg.sender, to, tokenId);
@@ -68,10 +68,7 @@ contract MyNFT is ERC721, Ownable {
         require(from == address(0) || to == address(0) || !_transferred[tokenId], "Token transfer is blocked");
         super._beforeTokenTransfer(from, to, tokenId);
     }      
-    */
 
-
-    /**
      * @dev Function that is called before any token approval. - YUL version
      * It checks if the token has already been transferred once - if no, approval is allowed.
      * If the approval is not allowed, it reverts the transaction with an error message.
@@ -79,7 +76,6 @@ contract MyNFT is ERC721, Ownable {
      * @param owner The address giving approval.
      * @param approved The address receiving approval.
      * @param tokenId The ID of the token being approved.
-     */
      function _beforeTokenTransfer(
         address from, 
         address to, 
@@ -100,4 +96,6 @@ contract MyNFT is ERC721, Ownable {
 
         super._beforeTokenTransfer(from, to, tokenId);
     }
+} - doesnt do anything - the require function works
+     */
 }

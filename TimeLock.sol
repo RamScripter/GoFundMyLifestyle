@@ -74,6 +74,11 @@ contract TimeLock {
         donationAddress = address(don);
     }
 
+    function addNFTContractAsOwnerToDonations() public {
+        address nftContractAddress = myNFTAddress;
+        IDonationContract(donationAddress).addOwner(nftContractAddress);
+    }
+
     /// @dev Creates a nftevent storing all the info about it (release time, nft and donation contracts, id of the token)
     /// @param _releaseTime : time at which the NFT will be given to highest donor, set by the creator
     /// @param _nftContract : the address of the nftcontract that created the token (should also be the same)
