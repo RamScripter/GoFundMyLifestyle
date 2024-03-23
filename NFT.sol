@@ -16,7 +16,6 @@ contract MyNFT is ERC721, Ownable {
     
     mapping(uint256 => tokenMetadata) private _tokenMetadata;
     mapping(uint256 => bool) private _transferred;
-    address public DonationsContractAddress;
 
     constructor(string memory name, string memory symbol) ERC721(name, symbol) Ownable (msg.sender) {
     }
@@ -25,7 +24,7 @@ contract MyNFT is ERC721, Ownable {
     /// @param owner The address to assign the NFT to - timelock contract
     /// @param tokenId The ID of the NFT - we can maybe change this to a string combo of creator name and content name
     /// @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
-    function mint(address owner, address creator, uint256 tokenId, string memory link) external onlyOwner {
+    function mint(address owner, address creator, uint256 tokenId, string memory link, address DonationsContractAddress) external onlyOwner {
         _mint(owner, tokenId);
         _tokenMetadata[tokenId] = tokenMetadata(link);
         IDonation(DonationsContractAddress).setToken(tokenId, creator);
