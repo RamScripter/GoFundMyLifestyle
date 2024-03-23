@@ -15,7 +15,7 @@ contract MyNFT is ERC721, Ownable {
         string link;
     }
     
-    mapping(uint256 => TokenMetadata) private _tokenMetadata;
+    mapping(uint256 => tokenMetadata) private _tokenMetadata;
     mapping(uint256 => bool) private _transferred;
     address public DonationsContractAddress;
     
