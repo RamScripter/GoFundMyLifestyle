@@ -30,13 +30,21 @@ contract donation is Ownable {
         transferOwnership(timeLockAddress);
     }
 
+
+    /**
+     * @dev Function to add another owner
+     * @param newOwner The address of the new owner to be added
+     */
+     function addOwner(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Invalid owner address");
+        addAuthorizedAddress(newOwner);
+    }
+
     /**
      * @dev Function to set a new token ID
      * @param tokenId The ID of the token to set
      * @param creator The address of the creator of the NFT associated with the token ID
      */
-
-    // NEED TO CHANGE OWNERSHIP LOGIC
      function setToken(uint256 tokenId, address creator) external onlyOwner {
         require(allTokenInfos[tokenId].creator == address(0), "Token ID already exists");
         allTokenInfos[tokenId].creator = creator;
