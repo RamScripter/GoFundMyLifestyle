@@ -21,7 +21,7 @@ contract Testing is Test {
         // Add NFT contract as owner to Donation contract
         timeLock.addNFTContractAsOwnerToDonations();
         timeLock.CreateNft(2, "test.net/2", 5);
-        donation = timeLock.getDonationAddress();
+        donation = timeLock.donationAddress();
     }
 
     function testContractDeployment() public view {
