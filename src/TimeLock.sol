@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "Donations.sol";
-import "NFT.sol";
+import "src/Donations.sol";
+import "src/NFT.sol";
 
 interface INFT {
     function transferOnce(address to, uint256 tokenId) external;
