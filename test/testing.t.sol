@@ -20,6 +20,8 @@ contract Testing is Test {
         timeLock.deployDonation();
         // Add NFT contract as owner to Donation contract
         timeLock.addNFTContractAsOwnerToDonations();
+        timeLock.CreateNft(2, "test.net/2", 5);
+        donation = timeLock.getDonationAddress();
     }
 
     function testTokenLink() public {
@@ -29,6 +31,21 @@ contract Testing is Test {
             keccak256(abi.encodePacked("test.net/2")),
             "Token link does not match expected value"
         );
+    }
+
+    // test for minting a new NFT with invalid input
+    function testTokenAlreadyExists() public {
+        timeLock.CreateNft(2, "test.net/2", 5);
+        vm.expectRevert("Token ID already exists");
+        timeLock.CreateNft(2, "test.net/2", 5);
+    }
+
+    // fuzz testing for donations 0 and negative values
+    function testDonateWithInvalidInput() public {
+        vm.expectRevert("Donation amount must be greater than 0");
+        donation.donate{value: 0}(2);
+        // donation.donate{value: -50}(2); - cant actually send negative value so dont need it 
+        // vm.expectRevert("Donation amount must be greater than 0");
     }
 }
 

@@ -89,6 +89,11 @@ contract TimeLock {
         donationAddress = address(don);
     }
 
+    // Function to retrieve the address of the donations contract
+    function getDonationAddress() external view returns (Donation){
+        return Donation(donationAddress);
+    }
+
     function addNFTContractAsOwnerToDonations() public onlyAuthorized {
         address nftContractAddress = myNFTAddress;
         IDonationContract(donationAddress).addOwner(nftContractAddress);
