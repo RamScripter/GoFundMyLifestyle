@@ -61,37 +61,64 @@ contract TimeLock {
     function getContractBalance() public view returns (uint) {
         return address(this).balance;
     }
+    /**
+     * @title TimeLock
+     * @dev A contract that manages time-locked operations related to NFTs and donations.
+     */
+    contract TimeLock {
+        address public myNFTAddress; // Address of the MyNFT contract
+        address public donationAddress; // Address of the Donation contract
 
-    // Function to check if TimeLock is the owner of MyNFT
-    function isOwnerOfMyNFT() public view returns (bool) {
-        address myNFTOwner = INFT(myNFTAddress).owner();
-        return myNFTOwner == address(this);
-    }
+        /**
+         * @dev Checks if the TimeLock contract is the owner of MyNFT.
+         * @return A boolean indicating whether the TimeLock contract is the owner of MyNFT.
+         */
+        function isOwnerOfMyNFT() public view returns (bool) {
+            address myNFTOwner = INFT(myNFTAddress).owner();
+            return myNFTOwner == address(this);
+        }
 
-    // Function to check if TimeLock is the owner of Donation
-    function isOwnerOfDonation() public view returns (bool) {
-        address donationOwner = IDonationContract(donationAddress).owner();
-        return donationOwner == address(this);
-    }
+        /**
+         * @dev Checks if the TimeLock contract is the owner of Donation.
+         * @return bool indicating whether the TimeLock contract is the owner of Donation.
+         */
+        function isOwnerOfDonation() public view returns (bool) {
+            address donationOwner = IDonationContract(donationAddress).owner();
+            return donationOwner == address(this);
+        }
 
-    function CreateNft(uint256 tokenId, string memory link, uint256 releaseTime) public {
-        INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link, donationAddress);
-        createNftEvent(releaseTime, myNFTAddress, tokenId, donationAddress);
-    }
+        /**
+         * @dev Creates a new NFT with the specified tokenId, link, and releaseTime.
+         * @param tokenId The ID of the new NFT.
+         * @param link The link associated with the new NFT.
+         * @param releaseTime The release time of the new NFT.
+         */
+        function CreateNft(uint256 tokenId, string memory link, uint256 releaseTime) public {
+            INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link, donationAddress);
+            createNftEvent(releaseTime, myNFTAddress, tokenId, donationAddress);
+        }
 
-    function deployMyNFT(string memory name, string memory symbol) public onlyAuthorized {
-        MyNFT myNFT = new MyNFT(name, symbol);
-        myNFTAddress = address(myNFT);
-    }
+        /**
+         * @dev Deploys a new instance of the MyNFT contract with the specified name and symbol.
+         * @param name The name of the MyNFT contract.
+         * @param symbol The symbol of the MyNFT contract.
+         */
+        function deployMyNFT(string memory name, string memory symbol) public onlyAuthorized {
+            MyNFT myNFT = new MyNFT(name, symbol);
+            myNFTAddress = address(myNFT);
+        }
 
-    function deployDonation() public onlyAuthorized {
-        Donation don = new Donation(address(this)); 
-        donationAddress = address(don);
-    }
+        // @dev Deploys a new instance of the Donation contract.
+        function deployDonation() public onlyAuthorized {
+            Donation don = new Donation(address(this)); 
+            donationAddress = address(don);
+        }
 
-    function addNFTContractAsOwnerToDonations() public onlyAuthorized {
-        address nftContractAddress = myNFTAddress;
-        IDonationContract(donationAddress).addOwner(nftContractAddress);
+        // @dev Adds the NFT contract as an owner to the Donation contract.
+        function addNFTContractAsOwnerToDonations() public onlyAuthorized {
+            address nftContractAddress = myNFTAddress;
+            IDonationContract(donationAddress).addOwner(nftContractAddress);
+        }
     }
 
     /// @dev Creates a nftevent storing all the info about it (release time, nft and donation contracts, id of the token)

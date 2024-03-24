@@ -92,7 +92,7 @@ contract Donation is Ownable {
      */
     function withdraw(uint256 tokenId) external onlyAuthorized {
         TokenInfo storage tokenInfo = allTokenInfos[tokenId];
-        require(tokenInfo.isActive, "Donations are currently not active for this token");
+        require(!tokenInfo.isActive, "Donations are currently active for this token");
 
         uint256 balance = tokenInfo.totalDonations;
         uint256 ownerShare = (balance * 3) / 100;
