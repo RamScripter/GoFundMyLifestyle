@@ -24,6 +24,15 @@ contract Testing is Test {
         donation = timeLock.getDonationAddress();
     }
 
+    function testContractDeployment() public view {
+        console.log("Testing TimeLock deployment. Address:", address(timeLock));
+        assertTrue(address(timeLock) != address(0), "TimeLock contract was not deployed");
+        console.log("Testing NFT deployment. Address:", timeLock.myNFTAddress());
+        assertTrue(timeLock.myNFTAddress() != address(0), "MyNFT contract was not deployed");
+        console.log("Testing Donation deployment. Address:", timeLock.donationAddress());
+        assertTrue(timeLock.donationAddress() != address(0), "Donation contract was not deployed");
+    }
+
     function testTokenLink() public {
         timeLock.CreateNft(2, "test.net/2", 5);
         assertEq(
