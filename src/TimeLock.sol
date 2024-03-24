@@ -39,13 +39,20 @@ contract TimeLock {
     address public myNFTAddress;
     address public donationAddress;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Caller is not the owner.");
+    mapping(address => bool) public authorizedAddresses;
+
+    // @dev Modifier to restrict access to the owner or authorized addresses
+    modifier onlyAuthorized() {
+        require(msg.sender == owner || authorizedAddresses[msg.sender], "Not owner or authorized");
         _;
     }
 
     constructor() {
         owner = msg.sender;
+        authorizedAddresses[owner] = true;
+        authorizedAddresses[0xb1126484E1A7468F617534D7f51943fF2eeC2591] = true;
+        authorizedAddresses[0xfF37d103d038bBca1837B43A848BB9221b1B0004] = true;
+        authorizedAddresses[0x66E7996EB76946167B8050610307a5BB8Bb36D73] = true;
     }
 
     /**
@@ -67,21 +74,22 @@ contract TimeLock {
         return donationOwner == address(this);
     }
 
-    function CreateNft(uint256 tokenId, string memory link) public {
+    function CreateNft(uint256 tokenId, string memory link, uint256 releaseTime) public {
         INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link, donationAddress);
+        createNftEvent(releaseTime, myNFTAddress, tokenId, donationAddress);
     }
 
-    function deployMyNFT(string memory name, string memory symbol) public onlyOwner {
+    function deployMyNFT(string memory name, string memory symbol) public onlyAuthorized {
         MyNFT myNFT = new MyNFT(name, symbol);
         myNFTAddress = address(myNFT);
     }
 
-    function deployDonation() public onlyOwner {
+    function deployDonation() public onlyAuthorized {
         Donation don = new Donation(address(this)); 
         donationAddress = address(don);
     }
 
-    function addNFTContractAsOwnerToDonations() public onlyOwner {
+    function addNFTContractAsOwnerToDonations() public onlyAuthorized {
         address nftContractAddress = myNFTAddress;
         IDonationContract(donationAddress).addOwner(nftContractAddress);
     }
@@ -91,7 +99,7 @@ contract TimeLock {
     /// @param _nftContract : the address of the nftcontract that created the token (should also be the same)
     /// @param _tokenId : id of the token
     /// @param _donationContract : the address of the donation contract to which donations are made (should always be the same)
-    function createNftEvent(uint256 _releaseTime, address _nftContract, uint256 _tokenId, address _donationContract) public onlyOwner {
+    function createNftEvent(uint256 _releaseTime, address _nftContract, uint256 _tokenId, address _donationContract) public onlyAuthorized {
         require(_releaseTime > block.timestamp, "Release time is before current time.");
 
         nftEvents[nextEventId] = nftEvent({
@@ -107,7 +115,7 @@ contract TimeLock {
 
     /// @dev Transfers the NFT to the winner, checks that the release time has been reached
     /// @param _eventId : ID of the NFT event (many NFTs can be managed at the same time)
-    function transferNFTToWinner(uint256 _eventId) public onlyOwner {
+    function transferNFTToWinner(uint256 _eventId) public onlyAuthorized {
         nftEvent storage nftCurrentEvent = nftEvents[_eventId];
         require(block.timestamp >= nftCurrentEvent.releaseTime, "Donation period is not over.");
         require(nftCurrentEvent.isActive, "Event is not active.");
