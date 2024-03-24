@@ -1,15 +1,66 @@
-# Go fund My LifeStyle
+## Foundry
 
-## Decentralized Application for Solidity Final Project
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-Our decentralized application (d'app) empowers influencers to take full ownership of their content, share it freely, and directly fundraise for their lifestyle through donations for content.
+Foundry consists of:
 
-Today, most Instagram influencers lack control over their content, relying heavily on third-party sponsors for monetization. Similarly, creators on centralized platforms like OnlyFans and Patreon face privacy concerns, with their sensitive data vulnerable to third-party control. Moreover, end users are often required to pay upfront to access content.
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-Our d'app aims to challenge these centralized platforms by enabling consumers to access influencer content without an upfront paywall. Users can choose to support creators based on their content's value and reward the top contributor under a given timeframe with a non-transferable NFT of the content (image or video, stored securely on decentralized platforms like IPFS or Filecoin).
+## Documentation
 
-This approach allows creators to directly monetize their content while retaining ownership, and enables consumers to evaluate content before deciding on their level of support.
-There's a wealth of influencers, public figures and attractive people whose content ordinary individuals enjoy consuming and supporting. 
+https://book.getfoundry.sh/
 
-We believe our d'app has the potential to revolutionize content monetization, offering empowerment to both influencers and consumers.
+## Usage
 
+### Build
+
+```shell
+$ forge build
+```
+
+### Test
+
+```shell
+$ forge test
+```
+
+### Format
+
+```shell
+$ forge fmt
+```
+
+### Gas Snapshots
+
+```shell
+$ forge snapshot
+```
+
+### Anvil
+
+```shell
+$ anvil
+```
+
+### Deploy
+
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+### Cast
+
+```shell
+$ cast <subcommand>
+```
+
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
