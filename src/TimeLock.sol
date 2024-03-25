@@ -21,6 +21,7 @@ interface IDonationContract {
 /// @title TimeLock - A contract for locking NFT tokens until they are transfered to highest donors
 contract TimeLock {
 
+
     event nftTransferred(address indexed beneficiary, address nftContract, uint256 tokenId);
 
     /// @dev Structure of an NFT event
@@ -56,12 +57,18 @@ contract TimeLock {
     }
 
     /**
-     * @dev Returns the contract's balance
+     * @dev gives contract's balance
+     * @return contract's balance
      */
     function getContractBalance() public view returns (uint) {
         return address(this).balance;
     }
 
+    
+    /**
+    * @dev Function to check if TimeLock is the owner of MyNFT
+    * @return true if the Timelock is truly the NFT owner
+    */
     /**
         * @dev Checks if the TimeLock contract is the owner of MyNFT.
         * @return A boolean indicating whether the TimeLock contract is the owner of MyNFT.
@@ -75,17 +82,21 @@ contract TimeLock {
         * @dev Checks if the TimeLock contract is the owner of Donation.
         * @return bool indicating whether the TimeLock contract is the owner of Donation.
         */
+    /**
+    * @dev Function to check if TimeLock is the owner of Donation
+    * @return true if the Timelock is truly the donation owner
+    */
     function isOwnerOfDonation() public view returns (bool) {
         address donationOwner = IDonationContract(donationAddress).owner();
         return donationOwner == address(this);
     }
 
     /**
-        * @dev Creates a new NFT with the specified tokenId, link, and releaseTime.
-        * @param tokenId The ID of the new NFT.
-        * @param link The link associated with the new NFT.
-        * @param releaseTime The release time of the new NFT.
-        */
+    * @dev Function to create the NFT
+    * @param tokenId The ID of the NFT
+    * @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
+    * @param releaseTime time at which the NFT will be given to highest donor, set by the creator
+    */
     function CreateNft(uint256 tokenId, string memory link, uint256 releaseTime) public {
         INFT(myNFTAddress).mint(address(this), msg.sender, tokenId, link, donationAddress);
         createNftEvent(releaseTime, myNFTAddress, tokenId, donationAddress);
@@ -114,11 +125,13 @@ contract TimeLock {
     }
 
 
-    /// @dev Creates a nftevent storing all the info about it (release time, nft and donation contracts, id of the token)
-    /// @param _releaseTime : time at which the NFT will be given to highest donor, set by the creator
-    /// @param _nftContract : the address of the nftcontract that created the token (should also be the same)
-    /// @param _tokenId : id of the token
-    /// @param _donationContract : the address of the donation contract to which donations are made (should always be the same)
+
+    /** @dev Creates a nftevent storing all the info about it (release time, nft and donation contracts, id of the token)
+    * @param _releaseTime : time at which the NFT will be given to highest donor, set by the creator
+    * @param _nftContract : the address of the nftcontract that created the token (should also be the same)
+    * @param _tokenId : id of the token
+    * @param _donationContract : the address of the donation contract to which donations are made (should always be the same)
+    */
     function createNftEvent(uint256 _releaseTime, address _nftContract, uint256 _tokenId, address _donationContract) public onlyAuthorized {
         require(_releaseTime > block.timestamp, "Release time is before current time.");
 
@@ -132,9 +145,10 @@ contract TimeLock {
 
         nextEventId++;
     }
-
-    /// @dev Transfers the NFT to the winner, checks that the release time has been reached
-    /// @param _eventId : ID of the NFT event (many NFTs can be managed at the same time)
+    /** 
+    * @dev Transfers the NFT to the winner, checks that the release time has been reached
+    * @param _eventId : ID of the NFT event (many NFTs can be managed at the same time)
+    */
     function transferNFTToWinner(uint256 _eventId) public onlyAuthorized {
         nftEvent storage nftCurrentEvent = nftEvents[_eventId];
         require(block.timestamp >= nftCurrentEvent.releaseTime, "Donation period is not over.");

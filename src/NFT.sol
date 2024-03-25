@@ -20,19 +20,24 @@ contract MyNFT is ERC721, Ownable {
     constructor(string memory name, string memory symbol) ERC721(name, symbol) Ownable (msg.sender) {
     }
     
-    /// @dev Mints a new NFT and assigns it to the parent timelock contract
-    /// @param owner The address to assign the NFT to - timelock contract
-    /// @param tokenId The ID of the NFT - we can maybe change this to a string combo of creator name and content name
-    /// @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
+    /** @dev Mints a new NFT and assigns it to the parent timelock contract
+    * @param owner The address to assign the NFT to - timelock contract
+    * @param creator The address of the NFT
+    * @param tokenId The ID of the NFT - we can maybe change this to a string combo of creator name and content name
+    * @param link The metadata link associated with the NFT - ie the IPFS/Filecoin link to content
+    * @param DonationsContractAddress The address of the donation contract
+    */
     function mint(address owner, address creator, uint256 tokenId, string memory link, address DonationsContractAddress) external onlyOwner {
         _mint(owner, tokenId);
         _tokenMetadata[tokenId] = tokenMetadata(link);
         IDonation(DonationsContractAddress).setToken(tokenId, creator);
     }
     
-    /// @dev Transfers the NFT to the specified address, largest donor or content creator, but only once
-    /// @param to The address to transfer the NFT to
-    /// @param tokenId The ID of the NFT - same as from mint
+    /**
+    * @dev Transfers the NFT to the specified address, largest donor or content creator, but only once
+    * @param to The address to transfer the NFT to
+    * @param tokenId The ID of the NFT - same as from mint
+    */
     function transferOnce(address to, uint256 tokenId) external {
         // add onlyOwner modifier to prevent anyone from transferring the token if we need for more fns
         require(ownerOf(tokenId) == msg.sender, "Only token owner can transfer");
@@ -43,9 +48,11 @@ contract MyNFT is ERC721, Ownable {
         _transferred[tokenId] = true;
     }
     
-    /// @dev Returns the metadata link associated with the NFT
-    /// @param tokenId The ID of the NFT
-    /// @return The metadata link
+    /**
+    * @dev Returns the metadata link associated with the NFT
+    * @param tokenId The ID of the NFT
+    * @return The metadata link
+    */
     function tokenLink(uint256 tokenId) external view returns (string memory) {
         return _tokenMetadata[tokenId].link;
     }
